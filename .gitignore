@@ -1,9 +1,41 @@
+# Environment & secrets
 .env
+.env.*
+!.env.example
+
+# Private keys & certificates — NEVER commit
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+id_ecdsa
+id_ecdsa.*
+id_dsa
+id_dsa.*
+*.ppk
+*.pub
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
+venv/
+*.egg-info/
+
+# Data (large / sensitive)
 data/apify_cache/
 data/lead_pool.db
 data/contacted.db
 data/exports/
 data/campaign-archive/
+
+# OS
+.DS_Store
+Thumbs.db
