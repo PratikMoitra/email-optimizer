@@ -1,53 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-/* ─── Mock Data (replaced by API calls later) ─── */
+/* ─── Mock Data ─── */
 const MOCK_STATS = {
   activePipelines: 3,
   totalLeads: 2847,
   validEmails: 1923,
   deployedToday: 312,
-  replyRate: 4.8,
   creditsVayne: { used: 7200, total: 10000 },
   creditsAmf: { used: 680, total: 1000 },
 };
 
 const MOCK_BATCHES = [
   {
-    id: 1,
-    name: "SaaS CEOs — US West",
-    status: "deploying",
-    total: 842,
-    validated: 842,
-    valid: 623,
-    researched: 623,
-    generated: 580,
-    deployed: 312,
+    id: 1, name: "SaaS CEOs — US West", status: "deploying",
+    total: 842, validated: 842, valid: 623, researched: 623, generated: 580, deployed: 312,
     createdAt: "2026-03-10",
   },
   {
-    id: 2,
-    name: "Agency Founders — UK",
-    status: "researching",
-    total: 1205,
-    validated: 1205,
-    valid: 890,
-    researched: 445,
-    generated: 0,
-    deployed: 0,
+    id: 2, name: "Agency Founders — UK", status: "researching",
+    total: 1205, validated: 1205, valid: 890, researched: 445, generated: 0, deployed: 0,
     createdAt: "2026-03-11",
   },
   {
-    id: 3,
-    name: "E-commerce Directors",
-    status: "validating",
-    total: 800,
-    validated: 310,
-    valid: 210,
-    researched: 0,
-    generated: 0,
-    deployed: 0,
+    id: 3, name: "E-commerce Directors", status: "validating",
+    total: 800, validated: 310, valid: 210, researched: 0, generated: 0, deployed: 0,
     createdAt: "2026-03-12",
   },
 ];
@@ -63,12 +41,12 @@ const MOCK_EVENTS = [
 function stagePercent(batch: typeof MOCK_BATCHES[0]) {
   const t = batch.total || 1;
   return {
-    pending: ((t - batch.validated) / t) * 100,
-    validated: ((batch.valid - batch.researched) / t) * 100,
-    researched: ((batch.researched - batch.generated) / t) * 100,
-    generated: ((batch.generated - batch.deployed) / t) * 100,
     deployed: (batch.deployed / t) * 100,
+    generated: ((batch.generated - batch.deployed) / t) * 100,
+    researched: ((batch.researched - batch.generated) / t) * 100,
+    validated: ((batch.valid - batch.researched) / t) * 100,
     skipped: ((batch.validated - batch.valid) / t) * 100,
+    pending: ((t - batch.validated) / t) * 100,
   };
 }
 
@@ -86,29 +64,82 @@ function statusBadge(status: string) {
   return <span className={`badge ${b.cls}`}>{b.label}</span>;
 }
 
-/* ─── NAV ITEMS ─── */
+/* ─── Icons (SVG) ─── */
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
   { id: "dashboard", icon: "📊", label: "Dashboard" },
   { id: "pipelines", icon: "🔄", label: "Pipelines" },
   { id: "campaigns", icon: "📧", label: "Campaigns" },
   { id: "settings", icon: "⚙️", label: "Settings" },
-  { id: "admin", icon: "🛡️", label: "Admin" },
+  { id: "webhooks", icon: "🔔", label: "Webhooks" },
 ];
 
-/* ─── MAIN PAGE ─── */
+/* ─── Main Page ─── */
 export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("dashboard");
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Check saved preference or system preference
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      setIsDark(true);
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else if (saved === "light") {
+      setIsDark(false);
+      document.documentElement.removeAttribute("data-theme");
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setIsDark(true);
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
+  function toggleTheme() {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    }
+  }
 
   return (
     <div className="app-layout">
-      {/* Sidebar */}
+      {/* ─── Sidebar ─── */}
       <nav className="sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="logo-icon">⚡</div>
-            Email Optimizer
+            <div className="logo-placeholder">EO</div>
+            <span>Email Optimizer</span>
           </div>
         </div>
+
         <div className="sidebar-nav">
           <div className="nav-section-label">Overview</div>
           {NAV_ITEMS.slice(0, 3).map((item) => (
@@ -135,23 +166,21 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
-        {/* Credit gauges at bottom */}
-        <div style={{ padding: "16px 20px", borderTop: "1px solid var(--border-default)" }}>
-          <div className="credit-gauge" style={{ marginBottom: 12 }}>
+
+        {/* Credit gauges */}
+        <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border-default)" }}>
+          <div className="credit-gauge" style={{ marginBottom: 10 }}>
             <div className="gauge-labels">
-              <span>Vayne Credits</span>
+              <span>Vayne</span>
               <span>{MOCK_STATS.creditsVayne.used.toLocaleString()} / {MOCK_STATS.creditsVayne.total.toLocaleString()}</span>
             </div>
             <div className="gauge-bar">
-              <div
-                className="gauge-fill"
-                style={{ width: `${(MOCK_STATS.creditsVayne.used / MOCK_STATS.creditsVayne.total) * 100}%` }}
-              />
+              <div className="gauge-fill" style={{ width: `${(MOCK_STATS.creditsVayne.used / MOCK_STATS.creditsVayne.total) * 100}%` }} />
             </div>
           </div>
           <div className="credit-gauge">
             <div className="gauge-labels">
-              <span>AMF Credits</span>
+              <span>Anymailfinder</span>
               <span>{MOCK_STATS.creditsAmf.used} / {MOCK_STATS.creditsAmf.total}</span>
             </div>
             <div className="gauge-bar">
@@ -162,13 +191,31 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Theme toggle */}
+        <div style={{ padding: "8px 12px", borderTop: "1px solid var(--border-default)" }}>
+          <div className="theme-toggle" onClick={toggleTheme} id="theme-toggle">
+            {isDark ? <MoonIcon /> : <SunIcon />}
+            <span style={{ flex: 1 }}>{isDark ? "Dark mode" : "Light mode"}</span>
+            <div className={`toggle-track ${isDark ? "active" : ""}`}>
+              <div className="toggle-knob" />
+            </div>
+          </div>
+        </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="main-content">
+      {/* ─── Main Content ─── */}
+      <main className="main-content grid-bg">
         <div className="page-header">
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Real-time overview of your outreach pipeline</p>
+          <div className="page-header-row">
+            <div>
+              <h1 className="page-title">Dashboard</h1>
+              <p className="page-subtitle">Real-time overview of your outreach pipeline</p>
+            </div>
+            <button id="btn-new-pipeline" className="btn btn-primary">
+              + New Pipeline
+            </button>
+          </div>
         </div>
 
         <div className="page-body">
@@ -197,15 +244,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Pipeline Cards */}
+          {/* Pipeline Table */}
           <div className="card" style={{ marginBottom: 24 }}>
             <div className="card-header">
               <div className="card-title">Active Pipelines</div>
-              <button id="btn-new-pipeline" className="btn btn-primary" style={{ fontSize: 13, padding: "8px 16px" }}>
-                + New Pipeline
-              </button>
             </div>
-
             <table className="data-table">
               <thead>
                 <tr>
@@ -238,7 +281,7 @@ export default function DashboardPage() {
                       </td>
                       <td>{batch.total.toLocaleString()}</td>
                       <td>{batch.deployed.toLocaleString()}</td>
-                      <td style={{ color: "var(--text-muted)" }}>{batch.createdAt}</td>
+                      <td style={{ color: "var(--text-muted)", fontSize: 13 }}>{batch.createdAt}</td>
                     </tr>
                   );
                 })}
@@ -246,40 +289,39 @@ export default function DashboardPage() {
             </table>
           </div>
 
-          {/* Recent Events */}
+          {/* Webhook Events */}
           <div className="card">
             <div className="card-header">
-              <div className="card-title">Webhook Events</div>
+              <div className="card-title">Recent Events</div>
               <span className="badge badge-success">Live</span>
             </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {MOCK_EVENTS.map((event, i) => (
                 <div
                   key={i}
                   className="animate-slide-in"
                   style={{
-                    animationDelay: `${i * 0.1}s`,
+                    animationDelay: `${i * 0.08}s`,
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "12px 16px",
-                    background: "var(--bg-surface)",
+                    padding: "10px 14px",
+                    background: "var(--bg-input)",
                     borderRadius: "var(--radius-sm)",
                     border: "1px solid var(--border-default)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{
-                      width: 8, height: 8, borderRadius: "50%",
+                      width: 7, height: 7, borderRadius: "50%",
                       background: event.type === "credits.low" ? "var(--brand-warning)" : "var(--brand-success)",
                       flexShrink: 0,
                     }} />
-                    <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+                    <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                       {event.msg}
                     </span>
                   </div>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", marginLeft: 16 }}>
                     {event.time}
                   </span>
                 </div>
