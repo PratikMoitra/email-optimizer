@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+data/apify_cache/
+data/lead_pool.db
+data/contacted.db
+data/exports/
+data/campaign-archive/
