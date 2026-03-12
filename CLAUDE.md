@@ -42,7 +42,7 @@ The system runs a 3-phase loop in `orchestrator.py`:
 
 1. **HARVEST** — Queries Instantly API for campaigns deployed 48+ hours ago. Compares baseline vs challenger reply rates. If challenger wins (and has `MIN_REPLIES_FOR_WINNER = 1` minimum replies), promotes it by overwriting `config/baseline.md`. Logs results to `results/results.log` (append-only JSONL) and `results/experiments/{id}.json`.
 
-2. **GENERATE** — Reads `config/baseline.md`, `data/resource.md`, `data/cold-email-course.md`, and the last 50 entries from `results/results.log`. Samples leads from `lead_pool.db` for niche context. Calls Claude (`claude-opus-4-6` with extended thinking + web search) to produce a copy-only mutation — same lead filters, new subject/body/CTA.
+2. **GENERATE** — Reads `config/baseline.md`, `data/resource.md`, `data/cold-email-course.md`, and the last 50 entries from `results/results.log`. Samples leads from `lead_pool.db` for niche context. Calls OpenAI GPT-4o (with function calling) to produce a copy-only mutation — same lead filters, new subject/body/CTA.
 
 3. **DEPLOY** — Parses the baseline and challenger configs (extracting email steps as HTML, lead filters as structured dicts, campaign settings). Creates two Instantly campaigns via `instantly_client.py`, draws `LEADS_PER_ARM = 250` leads per arm from `lead_pool.db` (marking them `assigned`), adds leads to campaigns, activates them, and appends to `data/active_experiments.json`.
 
@@ -79,7 +79,7 @@ results/experiments/         — Full experiment records (copy + configs + final
 Create a `.env` file from `.env.example` and collect:
 - **INSTANTLY_API_KEY** — Instantly.ai API v2 bearer token (required)
 - **APIFY_API_TOKEN** — Apify API token for lead scraping (required)
-- **ANTHROPIC_API_KEY** — Anthropic API key for Claude challenger generation (required)
+- **OPENAI_API_KEY** — OpenAI API key for GPT-4o challenger generation (required)
 - **WEBHOOK_URL** — Slack webhook URL for notifications (optional)
 
 ### 2. Product/Service Description
@@ -106,7 +106,7 @@ The system draws leads from a pre-scraped SQLite database at `data/lead_pool.db`
 ### 6. GitHub Actions (for autonomous operation)
 The workflow at `.github/workflows/optimize.yml` runs every 4 hours. The user needs to:
 - Push this repo to GitHub
-- Add secrets: `INSTANTLY_API_KEY`, `APIFY_API_TOKEN`, `ANTHROPIC_API_KEY`, `WEBHOOK_URL`
+- Add secrets: `INSTANTLY_API_KEY`, `APIFY_API_TOKEN`, `OPENAI_API_KEY`, `WEBHOOK_URL`
 - Enable GitHub Actions
 - Ensure `lead_pool.db` is available on the runner (it's too large for git — use LFS or upload separately)
 

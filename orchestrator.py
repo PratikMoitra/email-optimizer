@@ -30,7 +30,7 @@ from datetime import datetime, date, timezone
 from pathlib import Path
 
 import requests as _requests
-import anthropic
+from openai import OpenAI
 from dotenv import load_dotenv
 
 import instantly_client as ic
@@ -607,7 +607,7 @@ def phase_generate(last_summary: str):
         pool_industries_str = "(unknown)"
         pool_sample_str = "(unknown)"
 
-    client = anthropic.Anthropic()
+    client = OpenAI()
 
     # Exploration vs exploitation strategy
     if has_history:
@@ -622,10 +622,10 @@ def phase_generate(last_summary: str):
     else:
         experimentation_guidance = """No history yet — this is the first experiment. MAXIMIZE EXPLORATION:
 - Go bold: completely rewrite the copy, try a radically different angle.
-- Change the audience if you have a strong hypothesis from your web research.
+- Change the audience if you have a strong hypothesis from the provided context.
 - Make BIG swings. The system is designed for aggressive iteration — failed experiments
   cost nothing. Playing it safe wastes the first experiment.
-- Use web search extensively to research what messaging resonates with the target market."""
+- Study the cold email course and product context deeply to find angles others miss."""
 
     prompt = f"""You are an autonomous cold email optimization agent in an autoresearch loop.
 
@@ -673,9 +673,6 @@ Key principles:
 - THE HUMAN WRITES STRATEGY, YOU WRITE IMPLEMENTATION: the cold email course and resource
   file are your "program.md" — they define the search space and constraints. Your job is
   to explore within that space intelligently based on the data.
-- USE WEB SEARCH: you have access to web search. Use it to research the target audience,
-  find pain points, study competitor messaging, discover industry trends, or look up
-  anything that would make your challenger more effective. Research before you write.
 
 ## EXPLORATION vs EXPLOITATION
 
@@ -724,8 +721,8 @@ Do NOT try to change lead filters — they are locked. Focus entirely on copy op
 
 ## MUTATION INSTRUCTIONS
 
-1. RESEARCH FIRST: use web search to study the target audience. What are their pain points?
-   What language do they use? What's happening in their industry right now? Find real data.
+1. RESEARCH FIRST: study the cold email course, product context, lead pool data, and experiment
+   history. What are the target audience's pain points? What language resonates? Use this context deeply.
 
 2. Study the experiment history. Identify patterns: what improved reply rate? What didn't?
    If there's no history, use your research to make a strong, differentiated challenger.
@@ -785,78 +782,75 @@ The file MUST follow this structure exactly:
 
     # Tool: let Claude read full experiment records on demand
     read_experiment_tool = {
-        "name": "read_experiment",
-        "description": (
-            "Read the full record of a past experiment, including complete email copy "
-            "(subject + body) and configs for both baseline and challenger. "
-            "Use this to study what copy was tested and learn from winners/losers."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "experiment_id": {
-                    "type": "string",
-                    "description": "The experiment ID, e.g. 'exp-2026-03-10-14'"
-                }
-            },
-            "required": ["experiment_id"]
+        "type": "function",
+        "function": {
+            "name": "read_experiment",
+            "description": (
+                "Read the full record of a past experiment, including complete email copy "
+                "(subject + body) and configs for both baseline and challenger. "
+                "Use this to study what copy was tested and learn from winners/losers."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "experiment_id": {
+                        "type": "string",
+                        "description": "The experiment ID, e.g. 'exp-2026-03-10-14'"
+                    }
+                },
+                "required": ["experiment_id"]
+            }
         }
     }
 
-    tools = [
-        {"type": "web_search_20250305", "name": "web_search", "max_uses": 20},
-        read_experiment_tool,
-    ]
+    tools = [read_experiment_tool]
 
-    log.info("Calling Claude to generate challenger (with thinking + web search + experiment lookup)...")
+    log.info("Calling OpenAI to generate challenger (with experiment lookup)...")
     messages = [{"role": "user", "content": prompt}]
 
-    # Tool-use loop: keep going until Claude produces a final text response
+    # Tool-use loop: keep going until the model produces a final text response
     max_tool_rounds = 30
     response = None
     for tool_round in range(max_tool_rounds):
-        with client.messages.stream(
-            model="claude-opus-4-6",
-            max_tokens=128000,
-            thinking={"type": "adaptive"},
-            output_config={"effort": "max"},
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=16384,
             tools=tools,
             messages=messages,
-        ) as stream:
-            response = stream.get_final_message()
+        )
 
-        # Check if Claude wants to use read_experiment
-        tool_uses = [b for b in response.content if b.type == "tool_use" and b.name == "read_experiment"]
-        if not tool_uses:
-            break  # No more tool calls — Claude is done
+        choice = response.choices[0]
+        message = choice.message
+
+        # Check if the model wants to call tools
+        if not message.tool_calls:
+            break  # No tool calls — model is done
 
         # Process tool calls
-        messages.append({"role": "assistant", "content": response.content})
-        tool_results = []
-        for tu in tool_uses:
-            exp_id = tu.input.get("experiment_id", "")
+        messages.append(message)
+        for tc in message.tool_calls:
+            args = json.loads(tc.function.arguments)
+            exp_id = args.get("experiment_id", "")
             exp_file = ROOT / "results" / "experiments" / f"{exp_id}.json"
             if exp_file.exists():
                 result_text = exp_file.read_text()
-                log.info("Claude requested experiment %s — found.", exp_id)
+                log.info("Model requested experiment %s — found.", exp_id)
             else:
                 result_text = json.dumps({"error": f"Experiment {exp_id} not found."})
-                log.info("Claude requested experiment %s — not found.", exp_id)
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tu.id,
+                log.info("Model requested experiment %s — not found.", exp_id)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tc.id,
                 "content": result_text,
             })
-        messages.append({"role": "user", "content": tool_results})
 
-    # Extract text from response (skip thinking blocks, search result blocks, etc.)
-    # Use the LAST text block — earlier text blocks may be reasoning before search
-    text_blocks = [block.text.strip() for block in response.content if block.type == "text"]
-    if not text_blocks:
-        raise RuntimeError("Claude returned no text content in response")
-    challenger_config = text_blocks[-1]  # last text block has the final config
-    log.info("Claude response: %d content blocks, %d text blocks, %d tool rounds",
-             len(response.content), len(text_blocks), tool_round + 1)
+    # Extract text from response
+    challenger_config = response.choices[0].message.content
+    if not challenger_config:
+        raise RuntimeError("OpenAI returned no text content in response")
+    challenger_config = challenger_config.strip()
+    log.info("OpenAI response: %d tool rounds, finish_reason=%s",
+             tool_round + 1, response.choices[0].finish_reason)
 
     # Validate challenger has email steps
     challenger_steps = parse_email_steps(challenger_config)

@@ -42,7 +42,7 @@ Every **4 hours**, the system runs a tight optimization loop:
 
 | Component | Technology |
 |---|---|
-| **AI Engine** | Anthropic Claude (`claude-opus-4-6`) with extended thinking + web search |
+| **AI Engine** | OpenAI GPT-4o with function calling |
 | **Email Platform** | [Instantly.ai](https://instantly.ai) via API v2 |
 | **Lead Scraping** | [Apify](https://apify.com) (offline pool replenishment) |
 | **Lead Storage** | SQLite (`lead_pool.db`) |
@@ -111,7 +111,7 @@ Fill in your API keys:
 |---|---|---|
 | `INSTANTLY_API_KEY` | ✅ | Instantly.ai API v2 bearer token |
 | `APIFY_API_TOKEN` | ✅ | Apify API token for lead scraping |
-| `ANTHROPIC_API_KEY` | ✅ | Anthropic API key for Claude |
+| `OPENAI_API_KEY` | ✅ | OpenAI API key for GPT-4o |
 | `WEBHOOK_URL` | ❌ | Slack webhook URL for notifications |
 
 ### 3. Set Up Your Baseline
@@ -184,7 +184,7 @@ python purge_old_leads.py --dry-run  # preview without deleting
 The workflow at `.github/workflows/optimize.yml` runs every 4 hours automatically. To enable:
 
 1. Push this repo to GitHub
-2. Add repository secrets: `INSTANTLY_API_KEY`, `APIFY_API_TOKEN`, `ANTHROPIC_API_KEY`, `WEBHOOK_URL`
+2. Add repository secrets: `INSTANTLY_API_KEY`, `APIFY_API_TOKEN`, `OPENAI_API_KEY`, `WEBHOOK_URL`
 3. Enable GitHub Actions
 4. Ensure `lead_pool.db` is available on the runner (use Git LFS or upload as artifact — it's too large for regular git)
 
