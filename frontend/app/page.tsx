@@ -2,6 +2,135 @@
 
 import { useState, useEffect } from "react";
 
+/* ─── SVG Icons (Lucide-style, stroke-based) ─── */
+
+function IconDashboard({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="9" rx="1" />
+      <rect x="14" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="12" width="7" height="9" rx="1" />
+      <rect x="3" y="16" width="7" height="5" rx="1" />
+    </svg>
+  );
+}
+
+function IconPipeline({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2v4" />
+      <path d="M12 18v4" />
+      <path d="M4.93 4.93l2.83 2.83" />
+      <path d="M16.24 16.24l2.83 2.83" />
+      <path d="M2 12h4" />
+      <path d="M18 12h4" />
+      <path d="M4.93 19.07l2.83-2.83" />
+      <path d="M16.24 7.76l2.83-2.83" />
+      <circle cx="12" cy="12" r="4" />
+    </svg>
+  );
+}
+
+function IconCampaign({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M22 7l-10 7L2 7" />
+    </svg>
+  );
+}
+
+function IconSettings({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconWebhook({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
+function IconActivity({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  );
+}
+
+function IconUsers({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function IconMailCheck({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8" />
+      <path d="M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      <path d="M16 19l2 2 4-4" />
+    </svg>
+  );
+}
+
+function IconRocket({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+    </svg>
+  );
+}
+
+function IconSun({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function IconMoon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function IconPlus({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
 /* ─── Mock Data ─── */
 const MOCK_STATS = {
   activePipelines: 3,
@@ -64,37 +193,42 @@ function statusBadge(status: string) {
   return <span className={`badge ${b.cls}`}>{b.label}</span>;
 }
 
-/* ─── Icons (SVG) ─── */
-function SunIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1" x2="12" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" />
-      <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-
+/* ─── NAV CONFIG ─── */
 const NAV_ITEMS = [
-  { id: "dashboard", icon: "📊", label: "Dashboard" },
-  { id: "pipelines", icon: "🔄", label: "Pipelines" },
-  { id: "campaigns", icon: "📧", label: "Campaigns" },
-  { id: "settings", icon: "⚙️", label: "Settings" },
-  { id: "webhooks", icon: "🔔", label: "Webhooks" },
+  { id: "dashboard", icon: <IconDashboard />, label: "Dashboard" },
+  { id: "pipelines", icon: <IconPipeline />, label: "Pipelines" },
+  { id: "campaigns", icon: <IconCampaign />, label: "Campaigns" },
+  { id: "settings", icon: <IconSettings />, label: "Settings" },
+  { id: "webhooks", icon: <IconWebhook />, label: "Webhooks" },
+];
+
+/* ─── STAT CONFIG ─── */
+const STAT_CARDS = [
+  {
+    icon: <IconActivity />,
+    value: MOCK_STATS.activePipelines,
+    label: "Active Pipelines",
+    color: "var(--brand-primary)",
+  },
+  {
+    icon: <IconUsers />,
+    value: MOCK_STATS.totalLeads.toLocaleString(),
+    label: "Total Leads",
+    color: "var(--brand-accent)",
+  },
+  {
+    icon: <IconMailCheck />,
+    value: MOCK_STATS.validEmails.toLocaleString(),
+    label: "Valid Emails",
+    color: "var(--brand-success)",
+    change: "↑ 67.5% hit rate",
+  },
+  {
+    icon: <IconRocket />,
+    value: MOCK_STATS.deployedToday,
+    label: "Deployed Today",
+    color: "var(--brand-warning)",
+  },
 ];
 
 /* ─── Main Page ─── */
@@ -103,7 +237,6 @@ export default function DashboardPage() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Check saved preference or system preference
     const saved = localStorage.getItem("theme");
     if (saved === "dark") {
       setIsDark(true);
@@ -195,7 +328,7 @@ export default function DashboardPage() {
         {/* Theme toggle */}
         <div style={{ padding: "8px 12px", borderTop: "1px solid var(--border-default)" }}>
           <div className="theme-toggle" onClick={toggleTheme} id="theme-toggle">
-            {isDark ? <MoonIcon /> : <SunIcon />}
+            {isDark ? <IconMoon /> : <IconSun />}
             <span style={{ flex: 1 }}>{isDark ? "Dark mode" : "Light mode"}</span>
             <div className={`toggle-track ${isDark ? "active" : ""}`}>
               <div className="toggle-knob" />
@@ -213,7 +346,8 @@ export default function DashboardPage() {
               <p className="page-subtitle">Real-time overview of your outreach pipeline</p>
             </div>
             <button id="btn-new-pipeline" className="btn btn-primary">
-              + New Pipeline
+              <IconPlus size={15} />
+              New Pipeline
             </button>
           </div>
         </div>
@@ -221,27 +355,20 @@ export default function DashboardPage() {
         <div className="page-body">
           {/* Stat Cards */}
           <div className="stats-grid">
-            <div className="stat-card animate-fade-in delay-1" style={{ "--stat-color": "var(--brand-primary)" } as React.CSSProperties}>
-              <div className="stat-icon">🔄</div>
-              <div className="stat-value">{MOCK_STATS.activePipelines}</div>
-              <div className="stat-label">Active Pipelines</div>
-            </div>
-            <div className="stat-card animate-fade-in delay-2" style={{ "--stat-color": "var(--brand-accent)" } as React.CSSProperties}>
-              <div className="stat-icon">👥</div>
-              <div className="stat-value">{MOCK_STATS.totalLeads.toLocaleString()}</div>
-              <div className="stat-label">Total Leads</div>
-            </div>
-            <div className="stat-card animate-fade-in delay-3" style={{ "--stat-color": "var(--brand-success)" } as React.CSSProperties}>
-              <div className="stat-icon">✉️</div>
-              <div className="stat-value">{MOCK_STATS.validEmails.toLocaleString()}</div>
-              <div className="stat-label">Valid Emails</div>
-              <div className="stat-change positive">↑ 67.5% hit rate</div>
-            </div>
-            <div className="stat-card animate-fade-in delay-4" style={{ "--stat-color": "var(--brand-warning)" } as React.CSSProperties}>
-              <div className="stat-icon">🚀</div>
-              <div className="stat-value">{MOCK_STATS.deployedToday}</div>
-              <div className="stat-label">Deployed Today</div>
-            </div>
+            {STAT_CARDS.map((stat, i) => (
+              <div
+                key={i}
+                className={`stat-card animate-fade-in delay-${i + 1}`}
+                style={{ "--stat-color": stat.color } as React.CSSProperties}
+              >
+                <div className="stat-icon-wrap" style={{ color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <div className="stat-value">{stat.value}</div>
+                <div className="stat-label">{stat.label}</div>
+                {stat.change && <div className="stat-change positive">{stat.change}</div>}
+              </div>
+            ))}
           </div>
 
           {/* Pipeline Table */}
@@ -317,7 +444,7 @@ export default function DashboardPage() {
                       background: event.type === "credits.low" ? "var(--brand-warning)" : "var(--brand-success)",
                       flexShrink: 0,
                     }} />
-                    <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                    <span style={{ fontSize: 13.5, color: "var(--text-secondary)" }}>
                       {event.msg}
                     </span>
                   </div>
