@@ -29,12 +29,27 @@ __pycache__/
 venv/
 *.egg-info/
 
+# Node.js
+node_modules/
+.next/
+out/
+.turbo/
+
 # Data (large / sensitive)
 data/apify_cache/
 data/lead_pool.db
 data/contacted.db
+data/pipeline_state.db
 data/exports/
 data/campaign-archive/
+*.csv
+
+# Google service account
+*-service-account.json
+*-credentials.json
+
+# Docker
+docker-compose.override.yml
 
 # OS
 .DS_Store

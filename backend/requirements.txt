@@ -1,0 +1,23 @@
+# Core
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-dotenv>=1.0.0
+
+# Database
+psycopg2-binary>=2.9.0
+sqlalchemy>=2.0.0
+
+# External APIs
+requests>=2.32.0
+openai>=1.0.0
+gspread>=6.0.0
+beautifulsoup4>=4.12.0
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Security
+cryptography>=43.0.0
+
+# Existing (kept for compatibility)
+apify-client>=1.8.0
