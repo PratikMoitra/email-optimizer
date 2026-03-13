@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from db import SessionLocal
-from models import Batch, Lead, Profile, UserApiKey
+from models import Batch, Lead, Profile, UserApiKey, UserOAuthToken
 from services.webhooks import emit
 from pipeline.vayne import VayneClient
 from pipeline.anymailfinder import AnymailfinderClient
@@ -501,6 +501,9 @@ def stage_deploy(batch_id: int):
                 },
             }, batch_id)
 
+            # Sync to Google Sheets if connected
+            _sync_to_sheets(db, batch, generated)
+
     finally:
         db.close()
 
@@ -525,6 +528,68 @@ def _build_instantly_sequences(email_data: dict) -> list:
         result.append(step)
 
     return result
+
+
+def _sync_to_sheets(db, batch: Batch, leads: list):
+    """Sync deployed leads to Google Sheets if user has connected Google."""
+    try:
+        google_token = db.query(UserOAuthToken).filter(
+            UserOAuthToken.user_id == batch.user_id,
+            UserOAuthToken.provider == "google",
+        ).first()
+
+        if not google_token:
+            log.info("Google Sheets not connected for user %s — skipping sync", batch.user_id)
+            return
+
+        sheet_id = (google_token.provider_metadata or {}).get("sheet_id")
+        if not sheet_id:
+            log.info("No Google Sheet selected for user %s — skipping sync", batch.user_id)
+            return
+
+        from security.encryption import decrypt
+        from services.sheets import get_client_from_oauth_token, sync_leads
+
+        access_token = decrypt(google_token.access_token)
+        refresh_token = decrypt(google_token.refresh_token) if google_token.refresh_token else None
+
+        client, updated = get_client_from_oauth_token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_expiry=google_token.token_expires_at,
+        )
+
+        # If token was refreshed, save it
+        if updated:
+            from security.encryption import encrypt
+            google_token.access_token = encrypt(updated["access_token"])
+            if updated.get("token_expires_at"):
+                google_token.token_expires_at = updated["token_expires_at"]
+            db.commit()
+
+        lead_dicts = [
+            {
+                "first_name": l.first_name or "",
+                "last_name": l.last_name or "",
+                "email": l.email or "",
+                "email_status": l.email_status or "",
+                "company_name": l.company_name or "",
+                "company_domain": l.company_domain or "",
+                "job_title": l.job_title or "",
+                "industry": l.industry or "",
+                "linkedin_url": l.linkedin_url or "",
+                "company_summary": l.company_summary or "",
+                "niche_pain_points": l.niche_pain_points or "",
+                "stage": l.stage or "",
+            }
+            for l in leads
+        ]
+
+        sync_leads(client, sheet_id, lead_dicts, batch.name)
+        log.info("Synced %d leads to Google Sheets for batch '%s'", len(lead_dicts), batch.name)
+
+    except Exception as e:
+        log.error("Google Sheets sync failed (non-fatal): %s", e)
 
 
 # ---------------------------------------------------------------------------

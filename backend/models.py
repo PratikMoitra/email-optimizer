@@ -24,6 +24,7 @@ class Profile(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
 
     api_keys = relationship("UserApiKey", back_populates="user", cascade="all, delete-orphan")
+    oauth_tokens = relationship("UserOAuthToken", back_populates="user", cascade="all, delete-orphan")
     batches = relationship("Batch", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -40,6 +41,28 @@ class UserApiKey(Base):
 
     __table_args__ = (
         Index("uq_user_service", "user_id", "service", unique=True),
+    )
+
+
+class UserOAuthToken(Base):
+    """Per-user OAuth tokens for external providers (Google, OpenAI, etc.)."""
+    __tablename__ = "user_oauth_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String, nullable=False)  # "google" | "openai"
+    access_token = Column(Text, nullable=False)  # encrypted
+    refresh_token = Column(Text)  # encrypted
+    token_expires_at = Column(DateTime(timezone=True))
+    scopes = Column(Text)  # space-separated scopes
+    provider_metadata = Column(JSON)  # e.g., {"sheet_id": "...", "sheet_name": "..."} for Google
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("Profile", back_populates="oauth_tokens")
+
+    __table_args__ = (
+        Index("uq_user_oauth_provider", "user_id", "provider", unique=True),
     )
 
 

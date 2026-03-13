@@ -1,10 +1,20 @@
 """
 Google Sheets sync — updates a shared sheet with pipeline lead data.
+
+Supports two authentication modes:
+  1. User OAuth tokens (multi-tenant: each user signs in with their Google account)
+  2. Service Account fallback (for backward compatibility / CI)
 """
+from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
+
 import gspread
-from google.oauth2.service_account import Credentials
+from google.oauth2.credentials import Credentials as OAuthCredentials
+from google.auth.transport.requests import Request
+
+from config import settings
 
 log = logging.getLogger("sheets")
 
@@ -18,18 +28,57 @@ HEADER_ROW = [
 ]
 
 
-def get_client(creds_file: str) -> gspread.Client:
-    """Authenticate with Google Sheets using a service account."""
-    creds = Credentials.from_service_account_file(creds_file, scopes=SCOPES)
-    return gspread.authorize(creds)
+def get_client_from_oauth_token(
+    access_token: str,
+    refresh_token: str | None = None,
+    token_expiry: datetime | None = None,
+) -> tuple[gspread.Client, dict]:
+    """
+    Authenticate with Google Sheets using a user's OAuth2 token.
+
+    Returns (gspread_client, updated_token_info).
+    updated_token_info contains refreshed access_token + expiry if token was refreshed.
+    """
+    creds = OAuthCredentials(
+        token=access_token,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=settings.GOOGLE_CLIENT_ID,
+        client_secret=settings.GOOGLE_CLIENT_SECRET,
+        scopes=SCOPES,
+    )
+
+    # Set expiry if available
+    if token_expiry:
+        creds.expiry = token_expiry.replace(tzinfo=None)  # google-auth expects naive UTC
+
+    # Refresh if expired
+    updated_token_info = {}
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        updated_token_info = {
+            "access_token": creds.token,
+            "token_expires_at": creds.expiry.replace(tzinfo=timezone.utc) if creds.expiry else None,
+        }
+        log.info("Google OAuth token refreshed")
+
+    return gspread.authorize(creds), updated_token_info
 
 
-def sync_leads(creds_file: str, sheet_id: str, leads: list, batch_name: str):
+def list_spreadsheets(client: gspread.Client) -> list[dict]:
+    """List all spreadsheets accessible to the authenticated user."""
+    sheets = client.openall()
+    return [
+        {"id": s.id, "title": s.title, "url": s.url}
+        for s in sheets
+    ]
+
+
+def sync_leads(client: gspread.Client, sheet_id: str, leads: list, batch_name: str):
     """
     Upsert leads into the Google Sheet.
     Creates header row if sheet is empty.
     """
-    client = get_client(creds_file)
     sheet = client.open_by_key(sheet_id)
     worksheet = sheet.sheet1
 

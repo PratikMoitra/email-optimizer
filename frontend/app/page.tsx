@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import SettingsPanel from "./settings-panel";
+import WebhooksPanel from "./webhooks-panel";
 
 /* ─── SVG Icons (Lucide-style, stroke-based) ─── */
 
@@ -248,6 +250,12 @@ export default function DashboardPage() {
       setIsDark(true);
       document.documentElement.setAttribute("data-theme", "dark");
     }
+
+    // Auto-navigate to settings on Google OAuth return
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("google") === "connected") {
+      setActiveNav("settings");
+    }
   }, []);
 
   function toggleTheme() {
@@ -342,119 +350,137 @@ export default function DashboardPage() {
         <div className="page-header">
           <div className="page-header-row">
             <div>
-              <h1 className="page-title">Dashboard</h1>
-              <p className="page-subtitle">Real-time overview of your outreach pipeline</p>
+              <h1 className="page-title">
+                {activeNav === "settings" ? "Settings" : activeNav === "webhooks" ? "Webhooks" : "Dashboard"}
+              </h1>
+              <p className="page-subtitle">
+                {activeNav === "settings"
+                  ? "Manage integrations and API keys"
+                  : activeNav === "webhooks"
+                    ? "Configure real-time event notifications"
+                    : "Real-time overview of your outreach pipeline"}
+              </p>
             </div>
-            <button id="btn-new-pipeline" className="btn btn-primary">
-              <IconPlus size={15} />
-              New Pipeline
-            </button>
+            {activeNav === "dashboard" && (
+              <button id="btn-new-pipeline" className="btn btn-primary">
+                <IconPlus size={15} />
+                New Pipeline
+              </button>
+            )}
           </div>
         </div>
 
         <div className="page-body">
-          {/* Stat Cards */}
-          <div className="stats-grid">
-            {STAT_CARDS.map((stat, i) => (
-              <div
-                key={i}
-                className={`stat-card animate-fade-in delay-${i + 1}`}
-                style={{ "--stat-color": stat.color } as React.CSSProperties}
-              >
-                <div className="stat-icon-wrap" style={{ color: stat.color }}>
-                  {stat.icon}
-                </div>
-                <div className="stat-value">{stat.value}</div>
-                <div className="stat-label">{stat.label}</div>
-                {stat.change && <div className="stat-change positive">{stat.change}</div>}
-              </div>
-            ))}
-          </div>
-
-          {/* Pipeline Table */}
-          <div className="card" style={{ marginBottom: 24 }}>
-            <div className="card-header">
-              <div className="card-title">Active Pipelines</div>
-            </div>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Batch Name</th>
-                  <th>Status</th>
-                  <th>Progress</th>
-                  <th>Leads</th>
-                  <th>Deployed</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MOCK_BATCHES.map((batch) => {
-                  const stages = stagePercent(batch);
-                  return (
-                    <tr key={batch.id} id={`batch-${batch.id}`}>
-                      <td style={{ color: "var(--text-primary)", fontWeight: 600 }}>
-                        {batch.name}
-                      </td>
-                      <td>{statusBadge(batch.status)}</td>
-                      <td style={{ minWidth: 180 }}>
-                        <div className="pipeline-stages">
-                          <div className="pipeline-stage deployed" style={{ width: `${stages.deployed}%` }} />
-                          <div className="pipeline-stage generated" style={{ width: `${stages.generated}%` }} />
-                          <div className="pipeline-stage researched" style={{ width: `${stages.researched}%` }} />
-                          <div className="pipeline-stage validated" style={{ width: `${stages.validated}%` }} />
-                          <div className="pipeline-stage skipped" style={{ width: `${stages.skipped}%` }} />
-                          <div className="pipeline-stage pending" style={{ width: `${stages.pending}%` }} />
-                        </div>
-                      </td>
-                      <td>{batch.total.toLocaleString()}</td>
-                      <td>{batch.deployed.toLocaleString()}</td>
-                      <td style={{ color: "var(--text-muted)", fontSize: 13 }}>{batch.createdAt}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Webhook Events */}
-          <div className="card">
-            <div className="card-header">
-              <div className="card-title">Recent Events</div>
-              <span className="badge badge-success">Live</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {MOCK_EVENTS.map((event, i) => (
-                <div
-                  key={i}
-                  className="animate-slide-in"
-                  style={{
-                    animationDelay: `${i * 0.08}s`,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "10px 14px",
-                    background: "var(--bg-input)",
-                    borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border-default)",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{
-                      width: 7, height: 7, borderRadius: "50%",
-                      background: event.type === "credits.low" ? "var(--brand-warning)" : "var(--brand-success)",
-                      flexShrink: 0,
-                    }} />
-                    <span style={{ fontSize: 13.5, color: "var(--text-secondary)" }}>
-                      {event.msg}
-                    </span>
+          {activeNav === "settings" ? (
+            <SettingsPanel />
+          ) : activeNav === "webhooks" ? (
+            <WebhooksPanel />
+          ) : (
+            <>
+              {/* Stat Cards */}
+              <div className="stats-grid">
+                {STAT_CARDS.map((stat, i) => (
+                  <div
+                    key={i}
+                    className={`stat-card animate-fade-in delay-${i + 1}`}
+                    style={{ "--stat-color": stat.color } as React.CSSProperties}
+                  >
+                    <div className="stat-icon-wrap" style={{ color: stat.color }}>
+                      {stat.icon}
+                    </div>
+                    <div className="stat-value">{stat.value}</div>
+                    <div className="stat-label">{stat.label}</div>
+                    {stat.change && <div className="stat-change positive">{stat.change}</div>}
                   </div>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", marginLeft: 16 }}>
-                    {event.time}
-                  </span>
+                ))}
+              </div>
+
+              {/* Pipeline Table */}
+              <div className="card" style={{ marginBottom: 24 }}>
+                <div className="card-header">
+                  <div className="card-title">Active Pipelines</div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Batch Name</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th>Leads</th>
+                      <th>Deployed</th>
+                      <th>Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MOCK_BATCHES.map((batch) => {
+                      const stages = stagePercent(batch);
+                      return (
+                        <tr key={batch.id} id={`batch-${batch.id}`}>
+                          <td style={{ color: "var(--text-primary)", fontWeight: 600 }}>
+                            {batch.name}
+                          </td>
+                          <td>{statusBadge(batch.status)}</td>
+                          <td style={{ minWidth: 180 }}>
+                            <div className="pipeline-stages">
+                              <div className="pipeline-stage deployed" style={{ width: `${stages.deployed}%` }} />
+                              <div className="pipeline-stage generated" style={{ width: `${stages.generated}%` }} />
+                              <div className="pipeline-stage researched" style={{ width: `${stages.researched}%` }} />
+                              <div className="pipeline-stage validated" style={{ width: `${stages.validated}%` }} />
+                              <div className="pipeline-stage skipped" style={{ width: `${stages.skipped}%` }} />
+                              <div className="pipeline-stage pending" style={{ width: `${stages.pending}%` }} />
+                            </div>
+                          </td>
+                          <td>{batch.total.toLocaleString()}</td>
+                          <td>{batch.deployed.toLocaleString()}</td>
+                          <td style={{ color: "var(--text-muted)", fontSize: 13 }}>{batch.createdAt}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Webhook Events */}
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title">Recent Events</div>
+                  <span className="badge badge-success">Live</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {MOCK_EVENTS.map((event, i) => (
+                    <div
+                      key={i}
+                      className="animate-slide-in"
+                      style={{
+                        animationDelay: `${i * 0.08}s`,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "10px 14px",
+                        background: "var(--bg-input)",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--border-default)",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{
+                          width: 7, height: 7, borderRadius: "50%",
+                          background: event.type === "credits.low" ? "var(--brand-warning)" : "var(--brand-success)",
+                          flexShrink: 0,
+                        }} />
+                        <span style={{ fontSize: 13.5, color: "var(--text-secondary)" }}>
+                          {event.msg}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", marginLeft: 16 }}>
+                        {event.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>
